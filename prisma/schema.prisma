@@ -1,0 +1,118 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Users {
+  id_user String @id @default(uuid())
+  fullName String
+  email String @unique
+  password String
+  photo_url String?
+  role Role @default(USER)
+
+  //Relaition
+  Enrollment Enrollment[]
+  Orders Orders[]
+
+  //Table Naming
+  @@map("users")
+}
+
+model Orders {
+  id_order String @id @default(uuid())
+  id_user String
+  id_course String
+  status Status @default(PENDING)
+  ammount Float
+  created_at DateTime @default(now())
+
+  //Relation
+  user Users @relation(fields: [id_user], references: [id_user], onDelete: Cascade)
+  course Course @relation(fields: [id_course], references: [id_course], onDelete: Cascade)
+
+  //Table Naming
+  @@map("orders")
+}
+
+model Enrollment {
+  id_enrollment String @id @default(uuid())
+  id_user String
+  id_course String
+  enroll_at DateTime @default(now())
+
+  //Relation
+  user Users @relation(fields: [id_user], references: [id_user], onDelete: Cascade)
+  course Course @relation(fields: [id_course], references: [id_course], onDelete: Cascade)
+
+  //Preventing Duplication
+  @@unique([id_user, id_course])
+
+  //Tabel Naming
+  @@map("enrollment")
+}
+
+model Course {
+  id_course String @id @default(uuid())
+  title String
+  description String
+  price Float
+  thumbnail String
+
+  //Relation
+  Enrollment Enrollment[]
+  Orders Orders[]
+  Lesson Lesson[]
+
+  //Tabel Naming
+  @@map("course")
+}
+
+model Lesson {
+  id_lesson String @id @default(uuid())
+  id_course String
+  title String
+  order Int
+
+  //Relation
+  Module Module[]
+
+  course Course @relation(fields: [id_course], references: [id_course], onDelete: Cascade)
+
+  //Table Naming
+  @@map("leeson")
+}
+
+model Module {
+  id_module String @id @default(uuid())
+  id_lesson String
+  title String
+  content String @db.Text
+  video_url  String?
+  order Int
+
+  //Relation
+  lesson Lesson @relation(fields: [id_lesson], references: [id_lesson], onDelete: Cascade)
+
+  //Table Naming
+  @@map("module")
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Status {
+  CANCELED
+  PENDING
+  PAID
+  FAILED
+}
+
