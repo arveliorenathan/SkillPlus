@@ -7,9 +7,10 @@ CREATE TYPE "public"."Status" AS ENUM ('CANCELED', 'PENDING', 'PAID', 'FAILED');
 -- CreateTable
 CREATE TABLE "public"."users" (
     "id_user" TEXT NOT NULL,
-    "fullName" TEXT NOT NULL,
+    "username" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT NOT NULL,
+    "fullName" TEXT,
     "photo_url" TEXT,
     "role" "public"."Role" NOT NULL DEFAULT 'USER',
 
@@ -70,6 +71,9 @@ CREATE TABLE "public"."module" (
 
     CONSTRAINT "module_pkey" PRIMARY KEY ("id_module")
 );
+
+-- CreateIndex
+CREATE UNIQUE INDEX "users_username_key" ON "public"."users"("username");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "users_email_key" ON "public"."users"("email");
