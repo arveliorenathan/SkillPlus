@@ -21,11 +21,28 @@ import { LoginInput, loginSchema } from "@/lib/schemas/user.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { getSession, signIn } from "next-auth/react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import z from "zod";
+import { useEffect } from "react";
 
 export function Login() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkSession = async () => {
+      const session = await getSession();
+      if (session?.user?.role === "ADMIN") {
+        router.push("/admin/dashboard");
+      } else if (session?.user?.role === "USER") {
+        router.push("/admin/dashboard");
+      }
+    };
+
+    checkSession();
+  }, [router]);
+
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -47,11 +64,17 @@ export function Login() {
       });
     } else {
       const session = await getSession();
+
       toast.success("Login Success", {
         description: `Welcome back ${session?.user.username}`,
         duration: 3000,
       });
-      console.log(session)
+      if (session?.user?.role === "ADMIN") {
+        router.refresh();
+        router.push("/admin/dashboard");
+      } else {
+        router.push("/user/dashboard");
+      }
     }
   };
 
