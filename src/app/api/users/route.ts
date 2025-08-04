@@ -9,7 +9,9 @@ export async function POST(req: Request) {
     const body = await req.json();
 
     // Validate request body
-    const { username, email, password } = registerSchema.parse(body);
+    const { username, email, password } = registerSchema
+      .omit({ confirmPassword: true })
+      .parse(body);
 
     // Check if email already exists
     const existingUserByEmail = await prisma.users.findUnique({
@@ -53,5 +55,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ error, message: "User Creation Failed." }, { status: 500 });
   }
 }
-
-//User Login Feature
