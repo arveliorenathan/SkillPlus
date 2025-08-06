@@ -17,6 +17,7 @@ export async function POST(req: Request) {
     const existingUserByEmail = await prisma.users.findUnique({
       where: { email },
     });
+
     if (existingUserByEmail) {
       return NextResponse.json(
         { user: null, message: "Email is already registered." },
@@ -52,6 +53,11 @@ export async function POST(req: Request) {
       { status: 201 }
     );
   } catch (error) {
-    return NextResponse.json({ error, message: "User Creation Failed." }, { status: 500 });
+    console.error("Register Error:", error); // log detail ke terminal
+
+    return NextResponse.json(
+      { error: String(error), message: "User Creation Failed." },
+      { status: 500 }
+    );
   }
 }

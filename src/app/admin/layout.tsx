@@ -48,7 +48,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Main Area */}
         <div className="flex flex-col w-full">
           {/* Navbar */}
-          <div className="flex items-center justify-between px-6 py-3">
+          <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-3">
               <SidebarTrigger />
               <span className="text-xl font-medium">{pageTitle}</span>

@@ -1,0 +1,11 @@
+-- AlterTable
+ALTER TABLE "public"."course" ADD COLUMN     "createAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "public"."lesson" ADD COLUMN     "createAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "public"."module" ADD COLUMN     "createAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+-- AlterTable
+ALTER TABLE "public"."users" ADD COLUMN     "createAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP;

@@ -1,4 +1,4 @@
-import { Calendar, Video, GaugeCircle, BadgeCentIcon, Settings } from "lucide-react";
+import { Video, GaugeCircle, BadgeCentIcon, Settings } from "lucide-react";
 
 import {
   Sidebar,
@@ -24,11 +24,6 @@ const items = [
     title: "Course",
     url: "/admin/course",
     icon: Video,
-  },
-  {
-    title: "Bootcamp",
-    url: "#",
-    icon: Calendar,
   },
   {
     title: "Transaction",
