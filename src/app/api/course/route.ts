@@ -1,9 +1,10 @@
 import { prisma } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { createCourseSchema } from "@/lib/schemas/course,schema";
+import { CreateCourseInput, createCourseSchema } from "@/lib/schemas/course.schema";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -23,23 +24,27 @@ export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
 
-    //Declaration Data
+    // Get Main Data
     const title = formData.get("title") as string;
     const description = formData.get("description") as string;
     const price = Number(formData.get("price"));
     const thumbnail = formData.get("thumbnail") as File;
+    const lessonsJson = formData.get("lessons") as string;
 
-    //Validate Request
-    const validation = createCourseSchema.safeParse({ title, description, price });
+    if (!thumbnail || !lessonsJson) {
+      return NextResponse.json({ error: "Thumbnail and lessons are required" }, { status: 400 });
+    }
+
+    const lessons = JSON.parse(lessonsJson);
+
+    // Schema Validation
+    const validation = createCourseSchema.safeParse({ title, description, price, lessons });
+
     if (!validation.success) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    if (!thumbnail) {
-      return NextResponse.json({ error: "Thumbnail file required" }, { status: 400 });
-    }
-
-    // Upload file ke Supabase Storage
+    // Upload Thumbnail to Bucket
     const fileExt = thumbnail.name.split(".").pop();
     const fileName = `${Date.now()}.${fileExt}`;
     const bucketName = "skillplus";
@@ -58,39 +63,67 @@ export async function POST(req: NextRequest) {
     const publicUrl = supabase.storage.from(bucketName).getPublicUrl(uploadData.path)
       .data.publicUrl;
 
+    if (!lessons || !Array.isArray(lessons)) {
+      return NextResponse.json({ message: "Lessons tidak valid" }, { status: 400 });
+    }
+
+    // Save Data to Prisma
     const newCourse = await prisma.course.create({
       data: {
         title,
         description,
         price,
         thumbnail: publicUrl,
+        Lesson: {
+          create: (lessons as CreateCourseInput["lessons"]).map(
+            (lesson: CreateCourseInput["lessons"][number], lessonIndex: number) => ({
+              title: lesson.title,
+              order: lesson.order ?? lessonIndex + 1,
+              Module: {
+                create: (lesson.modules as CreateCourseInput["lessons"][number]["modules"]).map(
+                  (module: CreateCourseInput["lessons"][number]["modules"][number], moduleIndex: number) => ({
+                    title: module.title,
+                    content: module.content,
+                    video_url: module.video_url?.trim() || null,
+                    order: module.order ?? moduleIndex + 1,
+                  })
+                ),
+              },
+            })
+          ),
+        },
+      },
+      include: {
+        Lesson: {
+          include: {
+            Module: true,
+          },
+        },
       },
     });
 
+
     return NextResponse.json(
       { data: newCourse, message: "Course created successfully" },
-      { status: 200 }
+      { status: 201 }
     );
   } catch (error) {
+    console.error("POST /api/course error:", error);
     return NextResponse.json({ error, message: "Course creation failed" }, { status: 500 });
   }
 }
 
 export async function GET(req: NextRequest) {
   try {
-    //Declare searchParams for searching bar
     const { searchParams } = new URL(req.url);
 
-    // 3 parameter: search, pagination, dan sortBy
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "9");
+    const page = Number(searchParams.get("page")) || 1;
+    const limit = Number(searchParams.get("limit")) || 9;
     const search = searchParams.get("search") || "";
-    const sortBy = searchParams.get("sortBy") || "createAt";
-    const sortOrder = searchParams.get("sortOrder") === "asc" ? "asc" : "desc";
 
     const skip = (page - 1) * limit;
 
-    // Count total data
+    // Count Data Total
     const total = await prisma.course.count({
       where: {
         title: {
@@ -100,7 +133,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    // Get data courses
+    // Get Course Data
     const courses = await prisma.course.findMany({
       where: {
         title: {
@@ -109,23 +142,35 @@ export async function GET(req: NextRequest) {
         },
       },
       orderBy: {
-        [sortBy]: sortOrder,
+        createAt: "desc",
       },
       skip,
       take: limit,
       include: {
-        mentor: true, // include mentor relation if needed
+        mentor: true,
+        Lesson: {
+          include: {
+            Module: true,
+          },
+        },
       },
     });
 
     return NextResponse.json({
+      success: true,
       data: courses,
-      page,
-      limit,
-      total,
-      totalPages: Math.ceil(total / limit),
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
     });
   } catch (error) {
-    return NextResponse.json({ error, message: "Get course data failed" }, { status: 500 });
+    console.error("GET /api/course error:", error);
+    return NextResponse.json(
+      { success: false, message: "Get course data failed", error },
+      { status: 500 }
+    );
   }
 }

@@ -10,8 +10,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
@@ -22,7 +20,7 @@ function getPageTitle(pathname: string) {
   switch (pathname) {
     case "/admin/dashboard":
       return "Dashboard";
-    case "/admin/course":
+    case "/admin/courses":
       return "Course";
     case "/admin/transaction":
       return "Transaction";

@@ -1,3 +1,19 @@
+export type module = {
+  id_module: string;
+  title: string;
+  content: string;
+  video_url: string;
+  id_lesson: string;
+};
+
+export type lesson = {
+  id_lesson: string;
+  title: string;
+  order: number;
+  id_course: string;
+  modules: Module[];
+};
+
 export type course = {
   id_course: string;
   title: string;
@@ -9,6 +25,6 @@ export type course = {
   mentor?: {
     id_mentor: string;
     name: string;
-    // tambahkan properti lain jika ada
   } | null;
+  lessons: Lesson[];
 };

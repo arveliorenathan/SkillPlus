@@ -22,7 +22,7 @@ const items = [
   },
   {
     title: "Course",
-    url: "/admin/course",
+    url: "/admin/courses",
     icon: Video,
   },
   {
