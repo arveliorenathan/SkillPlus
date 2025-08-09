@@ -10,7 +10,12 @@ import Image from "next/image";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { CreateMentorsInput, createMentorsSchema } from "@/lib/schemas/mentors.schema";
+import {
+  CreateMentorsInput,
+  createMentorsSchema,
+  editMentorSchema,
+  EditMentorsInput,
+} from "@/lib/schemas/mentors.schema";
 import {
   Form,
   FormControl,
@@ -33,6 +38,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export function Mentors() {
   const session = useSession();
@@ -40,13 +52,36 @@ export function Mentors() {
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [photoEdit, setPhotoEdit] = useState<File | null>(null);
+  const [previewEdit, setPreviewEdit] = useState<string | null>(null);
   const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [selectedMentor, setSelectedMentor] = useState<Mentor | null>(null);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
-  console.log(session, "Session : ");
+  const formAdd = useForm<CreateMentorsInput>({
+    resolver: zodResolver(createMentorsSchema),
+    defaultValues: {
+      name: "",
+      company: "",
+      specialization: "",
+    },
+  });
+
+  const formEdit = useForm<EditMentorsInput>({
+    resolver: zodResolver(editMentorSchema),
+    defaultValues: {
+      name: "",
+      company: "",
+      specialization: "",
+      is_active: false,
+    },
+  });
 
   useEffect(() => {
+    // Fetch mentors setiap kali session atau searchTerm berubah
     const fetchMentors = async () => {
       const query = new URLSearchParams({
         page: "1",
@@ -59,17 +94,9 @@ export function Mentors() {
       const result = await res.json();
       setMentors(result.data);
     };
+
     fetchMentors();
   }, [session, searchTerm]);
-
-  const form = useForm<CreateMentorsInput>({
-    resolver: zodResolver(createMentorsSchema),
-    defaultValues: {
-      name: "",
-      company: "",
-      specialization: "",
-    },
-  });
 
   const onSubmit = async (data: CreateMentorsInput) => {
     try {
@@ -110,12 +137,76 @@ export function Mentors() {
 
       await res.json();
       toast.success("Create Mentors Successfully", { duration: 3000 });
-      form.reset();
+      formAdd.reset();
       setPhoto(null);
       setPreview(null);
       window.location.reload();
     } catch (error) {
       console.error("Error saat membuat course:", error);
+      toast.error("Something Wrong!");
+    }
+  };
+
+  // Handle open edit modal
+  const handleOpenEdit = (mentor: Mentor) => {
+    setEditId(mentor.id_mentor);
+    setIsEditOpen(true);
+
+    formEdit.reset({
+      name: mentor.name,
+      company: mentor.company || "",
+      specialization: mentor.specialization || "",
+      is_active: mentor.is_active || false,
+    });
+
+    setPreviewEdit(mentor.photo_url || null);
+  };
+
+  const onSubmitEdit = async (data: EditMentorsInput) => {
+    if (!editId) return;
+
+    try {
+      // Check if user is admin
+      if (!session.data || session.data.user.role !== "ADMIN") {
+        toast.error("You dont have permission to edit mentors!", { duration: 3000 });
+        return;
+      }
+
+      const formData = new FormData();
+      if (data.name) {
+        formData.append("name", data.name);
+      }
+      if (data.company) {
+        formData.append("company", data.company);
+      }
+      if (data.specialization) {
+        formData.append("specialization", data.specialization);
+      }
+      if (photoEdit) {
+        formData.append("photo_url", photoEdit);
+      }
+      formData.append("is_active", data.is_active ? "true" : "false");
+
+      const res = await fetch(`/api/mentors/${editId}`, {
+        method: "PATCH",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.message || "Failed to update mentor");
+        return;
+      }
+
+      await res.json();
+      toast.success("Mentor updated successfully", { duration: 3000 });
+      setIsEditOpen(false);
+      setEditId(null);
+      setPhotoEdit(null);
+      setPreviewEdit(null);
+      window.location.reload();
+    } catch (error) {
+      console.error("Error saat mengupdate mentor:", error);
       toast.error("Something Wrong!");
     }
   };
@@ -187,8 +278,8 @@ export function Mentors() {
                     <Badge
                       className={
                         mentor.is_active
-                          ? "bg-green-500 hover:bg-green-600 text-white"
-                          : "bg-gray-400 hover:bg-gray-500 text-white"
+                          ? "bg-green-500 hover:bg-green-600 text-white px-3 py-1 text-sm"
+                          : "bg-red-500 hover:bg-red-600 text-white px-3 py-1 text-sm"
                       }>
                       {mentor.is_active ? "Active" : "Inactive"}
                     </Badge>
@@ -206,7 +297,11 @@ export function Mentors() {
                     <Button size="icon" variant="outline" className="bg-white/80 hover:bg-white">
                       <EllipsisIcon className="h-4 w-4" />
                     </Button>
-                    <Button size="icon" variant="outline" className="bg-white/80 hover:bg-white">
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      className="bg-white/80 hover:bg-white"
+                      onClick={() => handleOpenEdit(mentor)}>
                       <Edit2Icon className="h-4 w-4" />
                     </Button>
                     <Button
@@ -233,8 +328,8 @@ export function Mentors() {
           <DialogHeader>
             <DialogTitle className="text-center text-lg">Create Mentor Data</DialogTitle>
           </DialogHeader>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <Form {...formAdd}>
+            <form onSubmit={formAdd.handleSubmit(onSubmit)} className="space-y-4">
               {/* Photo Preview */}
               {preview && (
                 <div className="flex justify-center">
@@ -250,7 +345,7 @@ export function Mentors() {
                 </div>
               )}
               <FormField
-                control={form.control}
+                control={formAdd.control}
                 name="name"
                 render={({ field }) => (
                   <FormItem>
@@ -263,7 +358,7 @@ export function Mentors() {
                 )}
               />
               <FormField
-                control={form.control}
+                control={formAdd.control}
                 name="company"
                 render={({ field }) => (
                   <FormItem>
@@ -276,7 +371,7 @@ export function Mentors() {
                 )}
               />
               <FormField
-                control={form.control}
+                control={formAdd.control}
                 name="specialization"
                 render={({ field }) => (
                   <FormItem>
@@ -309,6 +404,117 @@ export function Mentors() {
                 />
               </div>
               <Button type="submit">Create Mentors</Button>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Edit Mentor */}
+      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="text-center text-lg">Edit Mentor Data</DialogTitle>
+          </DialogHeader>
+          <Form {...formEdit}>
+            <form onSubmit={formEdit.handleSubmit(onSubmitEdit)} className="space-y-4">
+              {/* Photo Preview */}
+              {(previewEdit || preview) && (
+                <div className="flex justify-center">
+                  <div className="h-50 overflow-hidden aspect-square">
+                    <Image
+                      src={previewEdit || preview || ""}
+                      alt="Thumbnail Preview"
+                      width={160}
+                      height={160}
+                      className="object-cover w-full h-full rounded-md"
+                    />
+                  </div>
+                </div>
+              )}
+              <FormField
+                control={formEdit.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Fullname</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Fullname" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={formEdit.control}
+                name="company"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Company</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Company" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={formEdit.control}
+                name="specialization"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Specialization</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Specialization" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={formEdit.control}
+                name="is_active"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status</FormLabel>
+                    <FormControl>
+                      <Select
+                        onValueChange={(value) => field.onChange(value === "true")}
+                        value={field.value?.toString()}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="-- Select Status --" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="true">Active</SelectItem>
+                          <SelectItem value="false">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="space-y-2">
+                <FormLabel>Photo</FormLabel>
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setPhotoEdit(file);
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        setPreviewEdit(reader.result as string);
+                      };
+                      reader.readAsDataURL(file);
+                    } else {
+                      setPreviewEdit(null);
+                    }
+                  }}
+                />
+              </div>
+              <Button type="submit">Update Mentor</Button>
             </form>
           </Form>
         </DialogContent>
