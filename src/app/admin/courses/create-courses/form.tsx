@@ -67,13 +67,13 @@ export default function CourseFormPage() {
     try {
       // Check if user is admin
       if (!session.data || session.data.user.role !== "ADMIN") {
-        toast.error("Anda tidak memiliki izin untuk membuat course.", { duration: 3000 });
+        toast.error("You do not have permission to create a course!", { duration: 3000 });
         return;
       }
 
       // Thumbnail Validation
       if (!thumbnail) {
-        toast.error("Thumbnail wajib diunggah", { duration: 3000 });
+        toast.error("Thumbnail required!", { duration: 3000 });
         return;
       }
 
@@ -86,7 +86,7 @@ export default function CourseFormPage() {
       formData.append("lessons", JSON.stringify(data.lessons));
 
       // Kirim request
-      const res = await fetch("/api/course", {
+      const res = await fetch("/api/courses", {
         method: "POST",
         body: formData,
       });

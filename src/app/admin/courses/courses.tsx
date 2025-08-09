@@ -26,7 +26,7 @@ export function Courses() {
         sortBy: "createAt",
         sortOrder: "desc",
       });
-      const res = await fetch(`/api/course?${query.toString()}`);
+      const res = await fetch(`/api/courses?${query.toString()}`);
       const result = await res.json();
       setCourses(result.data || []);
     };
@@ -40,7 +40,7 @@ export function Courses() {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold">Course Management</h2>
             <Button variant="outline" asChild>
-              <Link href="/admin/course/create-courses">
+              <Link href="/admin/courses/create-courses">
                 <PlusCircle className="h-4 w-4 mr-2" />
                 Add Course
               </Link>
@@ -100,7 +100,6 @@ export function Courses() {
             )}
           </div>
         </CardContent>
-
         <CardFooter />
       </Card>
     </div>

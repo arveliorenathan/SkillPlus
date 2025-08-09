@@ -1,4 +1,4 @@
-import { Video, GaugeCircle, BadgeCentIcon, Settings } from "lucide-react";
+import { Video, GaugeCircle, BadgeCentIcon, Settings, UsersRoundIcon } from "lucide-react";
 
 import {
   Sidebar,
@@ -20,6 +20,11 @@ const items = [
     url: "/admin/dashboard",
     icon: GaugeCircle,
   },
+  {
+    title: "Mentor",
+    url: "/admin/mentors",
+    icon: UsersRoundIcon,
+  },  
   {
     title: "Course",
     url: "/admin/courses",

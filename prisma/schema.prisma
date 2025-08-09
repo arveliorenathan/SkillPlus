@@ -112,7 +112,7 @@ model Module {
 model Mentor {
   id_mentor String @id @default(uuid())
   name String
-  photo_url String?
+  photo_url String
   company String? // Company where you work
   specialization String? // Skills, e.g., “Android Development, Kotlin”
   is_active Boolean @default(true) // Status active/nonactive

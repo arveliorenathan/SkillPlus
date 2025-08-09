@@ -19,11 +19,15 @@ import { LogOut } from "lucide-react";
 function getPageTitle(pathname: string) {
   switch (pathname) {
     case "/admin/dashboard":
-      return "Dashboard";
+      return "Dashboard Management";
+    case "/admin/mentors":
+      return "Mentor Management";
     case "/admin/courses":
-      return "Course";
+      return "Course Management";
+    case "/admin/courses/create-courses":
+      return "Create Course Management";
     case "/admin/transaction":
-      return "Transaction";
+      return "Transaction Management";
     case "/admin/setting":
       return "Setting";
     default:

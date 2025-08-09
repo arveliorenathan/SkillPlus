@@ -48,10 +48,11 @@ export async function POST(req: NextRequest) {
     const fileExt = thumbnail.name.split(".").pop();
     const fileName = `${Date.now()}.${fileExt}`;
     const bucketName = "skillplus";
+    const filePath = `courses/${fileName}`;
 
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const {error: uploadError } = await supabase.storage
       .from(bucketName)
-      .upload(fileName, thumbnail, {
+      .upload(filePath, thumbnail, {
         cacheControl: "3600",
         upsert: false,
       });
@@ -60,7 +61,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: uploadError.message }, { status: 500 });
     }
 
-    const publicUrl = supabase.storage.from(bucketName).getPublicUrl(uploadData.path)
+    const publicUrl = supabase.storage.from(bucketName).getPublicUrl(filePath)
       .data.publicUrl;
 
     if (!lessons || !Array.isArray(lessons)) {
