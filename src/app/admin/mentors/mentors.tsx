@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/form";
 import { toast } from "sonner";
 import { Mentor } from "@/types/mentors";
+import { Badge } from "@/components/ui/badge";
 
 export function Mentors() {
   const session = useSession();
@@ -140,20 +141,37 @@ export function Mentors() {
                   className="relative border-2 rounded-lg overflow-hidden">
                   {/* Background Image */}
                   <div className="w-full h-full aspect-square">
-                    <Image src={mentor.photo_url} alt={"Mentor Photo"} fill className="object-cover" />
+                    <Image
+                      src={mentor.photo_url}
+                      alt={"Mentor Photo"}
+                      fill
+                      className="object-cover"
+                    />
                     {/* Gradient overlay dari bawah */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent" />
                   </div>
 
-                  {/* Konten di bagian bawah */}
+                  {/* Badge Status */}
+                  <div className="absolute top-3 right-3">
+                    <Badge
+                      className={
+                        mentor.is_active
+                          ? "bg-green-500 hover:bg-green-600 text-white"
+                          : "bg-gray-400 hover:bg-gray-500 text-white"
+                      }>
+                      {mentor.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                  </div>
+
+                  {/* Mentor Data */}
                   <div className="absolute bottom-16 left-5 space-y-2 text-white">
                     <CardTitle className="text-lg font-bold">{mentor.name}</CardTitle>
                     <p className="text-sm line-clamp-1">{mentor.specialization || "-"}</p>
                     <p className="text-xs opacity-80 line-clamp-1">{mentor.company || "-"}</p>
                   </div>
 
-                  {/* Footer tombol */}
-                  <CardFooter className="absolute bottom-3 right-0 flex gap-2">
+                  {/* Footer Button */}
+                  <CardFooter className="absolute bottom-3 right-0 gap-2">
                     <Button size="icon" variant="outline" className="bg-white/80 hover:bg-white">
                       <EllipsisIcon className="h-4 w-4" />
                     </Button>
