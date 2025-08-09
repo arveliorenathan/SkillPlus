@@ -30,6 +30,8 @@ export async function POST(req: NextRequest) {
     const price = Number(formData.get("price"));
     const thumbnail = formData.get("thumbnail") as File;
     const lessonsJson = formData.get("lessons") as string;
+    const id_mentor = formData.get("id_mentor") as string | null;
+
 
     if (!thumbnail || !lessonsJson) {
       return NextResponse.json({ error: "Thumbnail and lessons are required" }, { status: 400 });
@@ -75,6 +77,7 @@ export async function POST(req: NextRequest) {
         description,
         price,
         thumbnail: publicUrl,
+        id_mentor,
         Lesson: {
           create: (lessons as CreateCourseInput["lessons"]).map(
             (lesson: CreateCourseInput["lessons"][number], lessonIndex: number) => ({
@@ -82,7 +85,10 @@ export async function POST(req: NextRequest) {
               order: lesson.order ?? lessonIndex + 1,
               Module: {
                 create: (lesson.modules as CreateCourseInput["lessons"][number]["modules"]).map(
-                  (module: CreateCourseInput["lessons"][number]["modules"][number], moduleIndex: number) => ({
+                  (
+                    module: CreateCourseInput["lessons"][number]["modules"][number],
+                    moduleIndex: number
+                  ) => ({
                     title: module.title,
                     content: module.content,
                     video_url: module.video_url?.trim() || null,
@@ -100,6 +106,7 @@ export async function POST(req: NextRequest) {
             Module: true,
           },
         },
+        mentor: true,
       },
     });
 

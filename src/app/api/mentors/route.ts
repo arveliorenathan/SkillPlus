@@ -24,13 +24,9 @@ export async function POST(req: NextRequest) {
 
     // Get Main Data
     const name = formData.get("name") as string;
-    const company = formData.get("company") as string;
-    const specialization = formData.get("specialization") as string;
+    const company = formData.get("company") as string | null;
+    const specialization = formData.get("specialization") as string | null;
     const photoUrl = formData.get("photo_url") as File;
-
-    // Ubah ke string atau null
-    const companyValue = company ? String(company) : null;
-    const specializationValue = specialization ? String(specialization) : null;
 
     if (!photoUrl) {
       return NextResponse.json({ error: "Photo required" }, { status: 400 });
@@ -65,8 +61,8 @@ export async function POST(req: NextRequest) {
     const newMentors = await prisma.mentor.create({
       data: {
         name,
-        company: companyValue,
-        specialization: specializationValue,
+        company,
+        specialization,
         photo_url: publicUrl,
       },
     });

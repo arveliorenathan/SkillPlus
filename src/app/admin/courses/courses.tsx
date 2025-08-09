@@ -67,7 +67,7 @@ export function Courses() {
                 <Card key={course.id_course} className="border-2 rounded-lg">
                   <CardHeader>
                     <CardTitle>
-                      <div className="flex items-center justify-center">
+                      <div className="flex items-center justify-center aspect-auto">
                         <Image
                           src={course.thumbnail || "/default.jpeg"}
                           alt="Course Image"

@@ -18,14 +18,34 @@ import Image from "next/image";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function CourseFormPage() {
   const session = useSession();
   const router = useRouter();
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [mentors, setMentors] = useState<{ id_mentor: string; name: string }[]>([]);
+  const [selectedMentor, setSelectedMentor] = useState("");
 
-  useEffect(() => {}, [session]);
+  useEffect(() => {
+    async function fetchMentors() {
+      const res = await fetch("/api/mentors", {
+        method: "GET",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setMentors(data.data);
+      }
+    }
+    fetchMentors();
+  }, [session]);
 
   const form = useForm<CreateCourseInput>({
     resolver: zodResolver(createCourseSchema),
@@ -82,6 +102,7 @@ export default function CourseFormPage() {
       formData.append("title", data.title);
       formData.append("description", data.description);
       formData.append("price", String(data.price));
+      formData.append("id_mentor", selectedMentor);
       formData.append("thumbnail", thumbnail);
       formData.append("lessons", JSON.stringify(data.lessons));
 
@@ -103,7 +124,7 @@ export default function CourseFormPage() {
       form.reset();
       setThumbnail(null);
       setPreview(null);
-      router.push("/admin/course");
+      router.push("/admin/courses");
     } catch (error) {
       console.error("Error saat membuat course:", error);
       toast.error("Terjadi kesalahan saat mengirim data.");
@@ -117,13 +138,15 @@ export default function CourseFormPage() {
           {/* Thumbnail Preview */}
           {preview && (
             <div className="flex justify-center">
-              <Image
-                src={preview}
-                alt="Thumbnail Preview"
-                height={100}
-                width={400}
-                className="rounded-md object-cover w-full max-w-xs"
-              />
+              <div className="aspect-auto">
+                <Image
+                  src={preview}
+                  alt="Thumbnail Preview"
+                  height={100}
+                  width={100}
+                  className="rounded-md object-cover w-full max-w-xs"
+                />
+              </div>
             </div>
           )}
 
@@ -175,6 +198,23 @@ export default function CourseFormPage() {
               </FormItem>
             )}
           />
+
+          {/* Mentor Select */}
+          <div className="space-y-2 w-full">
+            <FormLabel>Mentor</FormLabel>
+            <Select onValueChange={setSelectedMentor}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Pilih Mentor" />
+              </SelectTrigger>
+              <SelectContent className="w-full">
+                {mentors.map((mentor) => (
+                  <SelectItem key={mentor.id_mentor} value={mentor.id_mentor}>
+                    {mentor.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Thumbnail Upload */}
           <div className="space-y-2">
