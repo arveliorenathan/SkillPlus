@@ -22,6 +22,17 @@ import {
 import { toast } from "sonner";
 import { Mentor } from "@/types/mentors";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export function Mentors() {
   const session = useSession();
@@ -30,6 +41,8 @@ export function Mentors() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   console.log(session, "Session : ");
 
@@ -107,6 +120,24 @@ export function Mentors() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!deleteId) return;
+
+    const res = await fetch(`/api/mentors/${deleteId}`, {
+      method: "DELETE",
+    });
+
+    if (res.ok) {
+      toast.success("Mentor deleted successfully", { duration: 3000 });
+      setMentors((prev) => prev.filter((m) => m.id_mentor !== deleteId));
+      setDeleteId(null);
+      setIsDeleteOpen(false);
+    } else {
+      const err = await res.json();
+      toast.error(err.message || "Failed to delete mentor");
+    }
+  };
+
   return (
     <div>
       <Card className="w-full">
@@ -178,7 +209,13 @@ export function Mentors() {
                     <Button size="icon" variant="outline" className="bg-white/80 hover:bg-white">
                       <Edit2Icon className="h-4 w-4" />
                     </Button>
-                    <Button size="icon" variant="destructive">
+                    <Button
+                      size="icon"
+                      variant="destructive"
+                      onClick={() => {
+                        setDeleteId(mentor.id_mentor);
+                        setIsDeleteOpen(true);
+                      }}>
                       <Trash2Icon className="h-4 w-4" />
                     </Button>
                   </CardFooter>
@@ -276,6 +313,23 @@ export function Mentors() {
           </Form>
         </DialogContent>
       </Dialog>
+
+      {/* Alert Dialog Delete */}
+      <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure to delete mentors data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete this mentor data from our
+              server.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
